@@ -13,6 +13,14 @@ export const handler = async (event) => {
   const b = parseBody(event);
   const { data, sha } = await readData();
 
+  if (section === 'all') {
+    // Publie tout le data.json en une seule fois → 1 seul commit → 1 seul build
+    const fields = ['brand','nav','hero','about','footer','theme','categories','products'];
+    fields.forEach(f => { if (f in b) data[f] = b[f]; });
+    await writeData(data, sha, 'admin: publish all changes');
+    return ok();
+  }
+
   if (section === 'brand') {
     const fields = ['name', 'tagline', 'description', 'logo', 'currencySymbol'];
     fields.forEach(f => { if (f in b) data.brand[f] = String(b[f]).trim(); });

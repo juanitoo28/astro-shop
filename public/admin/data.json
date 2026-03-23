@@ -9,18 +9,9 @@
     "locale": "fr-FR"
   },
   "nav": [
-    {
-      "label": "Collection",
-      "href": "/#products"
-    },
-    {
-      "label": "À propos",
-      "href": "/#about"
-    },
-    {
-      "label": "Contact",
-      "href": "/#contact"
-    }
+    { "label": "Collection", "href": "/#products" },
+    { "label": "À propos", "href": "/#about" },
+    { "label": "Contact", "href": "/#contact" }
   ],
   "hero": {
     "headline": "La nouvelle\ncollection",
@@ -33,35 +24,17 @@
     "title": "Notre philosophie",
     "text": "Chaque pièce est pensée avec soin, dans des matières nobles et durables. Nous croyons en une mode consciente, intemporelle et accessible.",
     "values": [
-      {
-        "icon": "◈",
-        "label": "Matières naturelles"
-      },
-      {
-        "icon": "◉",
-        "label": "Production responsable"
-      },
-      {
-        "icon": "◎",
-        "label": "Livraison offerte dès 80€"
-      }
+      { "icon": "◈", "label": "Matières naturelles" },
+      { "icon": "◉", "label": "Production responsable" },
+      { "icon": "◎", "label": "Livraison offerte dès 80€" }
     ]
   },
   "footer": {
     "text": "© 2025 Maison Éclat. Tous droits réservés.",
     "links": [
-      {
-        "label": "Mentions légales",
-        "href": "#"
-      },
-      {
-        "label": "CGV",
-        "href": "#"
-      },
-      {
-        "label": "Contact",
-        "href": "#"
-      }
+      { "label": "Mentions légales", "href": "#" },
+      { "label": "CGV", "href": "#" },
+      { "label": "Contact", "href": "#" }
     ]
   },
   "theme": {
@@ -74,52 +47,24 @@
     "border": "#E5E4E0",
     "radius": "2px"
   },
-  "categories": [
-    "Hauts",
-    "Bas",
-    "Robes",
-    "Vestes",
-    "Manteaux"
-  ],
+  "categories": ["Hauts", "Bas", "Robes", "Vestes", "Manteaux"],
   "products": [
     {
       "id": "chemise-lin-blanc",
       "name": "Chemise en lin lavé",
-      "price": 79,
-      "originalPrice": 119.97,
+      "price": 89,
+      "originalPrice": null,
       "category": "Hauts",
       "badge": "Bestseller",
       "description": "Une chemise en lin lavé à la coupe décontractée. Légère, respirante, parfaite pour toutes les saisons.",
-      "details": [
-        "100% lin lavé certifié OEKO-TEX",
-        "Coupe ample et décontractée",
-        "Col boutonné, manches longues ajustables",
-        "Lavage en machine 30°C"
-      ],
-      "sizes": [
-        "XS",
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
+      "details": ["100% lin lavé certifié OEKO-TEX", "Coupe ample et décontractée", "Col boutonné, manches longues ajustables", "Lavage en machine 30°C"],
+      "sizes": ["XS", "S", "M", "L", "XL"],
       "colors": [
-        {
-          "hex": "#F5F2EC",
-          "name": "Blanc cassé"
-        },
-        {
-          "hex": "#C9B99A",
-          "name": "Sable"
-        },
-        {
-          "hex": "#6B7280",
-          "name": "Ardoise"
-        }
+        { "name": "Blanc cassé", "hex": "#F5F2EC" },
+        { "name": "Sable", "hex": "#C9B99A" },
+        { "name": "Ardoise", "hex": "#6B7280" }
       ],
-      "images": [
-        "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=800&q=80"
-      ],
+      "images": ["https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=800&q=80"],
       "inStock": true,
       "featured": true,
       "order": 0
@@ -132,31 +77,13 @@
       "category": "Bas",
       "badge": "Soldes",
       "description": "Un pantalon à jambe large et taille haute, en crêpe fluide.",
-      "details": [
-        "72% viscose, 28% polyester",
-        "Taille haute élastiquée",
-        "Jambe extra-large",
-        "Poches latérales profondes"
-      ],
-      "sizes": [
-        "XS",
-        "S",
-        "M",
-        "L"
-      ],
+      "details": ["72% viscose, 28% polyester", "Taille haute élastiquée", "Jambe extra-large", "Poches latérales profondes"],
+      "sizes": ["XS", "S", "M", "L"],
       "colors": [
-        {
-          "name": "Noir",
-          "hex": "#1A1A18"
-        },
-        {
-          "name": "Ivoire",
-          "hex": "#F0EDE4"
-        }
+        { "name": "Noir", "hex": "#1A1A18" },
+        { "name": "Ivoire", "hex": "#F0EDE4" }
       ],
-      "images": [
-        "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800&q=80"
-      ],
+      "images": ["https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800&q=80"],
       "inStock": true,
       "featured": true,
       "order": 1
@@ -169,36 +96,14 @@
       "category": "Robes",
       "badge": "Nouveau",
       "description": "Une robe midi légère en coton biologique. Coupe fluide, encolure ronde, dos légèrement ouvert.",
-      "details": [
-        "100% coton biologique GOTS",
-        "Longueur midi",
-        "Encolure ronde, manches courtes",
-        "Fermeture zippée dans le dos"
-      ],
-      "sizes": [
-        "XS",
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
+      "details": ["100% coton biologique GOTS", "Longueur midi", "Encolure ronde, manches courtes", "Fermeture zippée dans le dos"],
+      "sizes": ["XS", "S", "M", "L", "XL"],
       "colors": [
-        {
-          "name": "Terracotta",
-          "hex": "#C06B4A"
-        },
-        {
-          "name": "Vert sauge",
-          "hex": "#8A9E8B"
-        },
-        {
-          "name": "Écru",
-          "hex": "#EDE8DC"
-        }
+        { "name": "Terracotta", "hex": "#C06B4A" },
+        { "name": "Vert sauge", "hex": "#8A9E8B" },
+        { "name": "Écru", "hex": "#EDE8DC" }
       ],
-      "images": [
-        "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80"
-      ],
+      "images": ["https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80"],
       "inStock": true,
       "featured": true,
       "order": 2
@@ -211,35 +116,14 @@
       "category": "Vestes",
       "badge": null,
       "description": "Un blazer structuré en coupe oversize. Pièce phare de la garde-robe.",
-      "details": [
-        "55% laine, 45% polyester recyclé",
-        "Coupe oversize",
-        "Revers cranté, 2 boutons",
-        "Doublure intérieure"
-      ],
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
+      "details": ["55% laine, 45% polyester recyclé", "Coupe oversize", "Revers cranté, 2 boutons", "Doublure intérieure"],
+      "sizes": ["S", "M", "L", "XL"],
       "colors": [
-        {
-          "name": "Camel",
-          "hex": "#C4955A"
-        },
-        {
-          "name": "Gris clair",
-          "hex": "#D4D2CD"
-        },
-        {
-          "name": "Noir",
-          "hex": "#1A1A18"
-        }
+        { "name": "Camel", "hex": "#C4955A" },
+        { "name": "Gris clair", "hex": "#D4D2CD" },
+        { "name": "Noir", "hex": "#1A1A18" }
       ],
-      "images": [
-        "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&q=80"
-      ],
+      "images": ["https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&q=80"],
       "inStock": true,
       "featured": false,
       "order": 3
@@ -252,30 +136,13 @@
       "category": "Manteaux",
       "badge": "Exclusivité",
       "description": "Un manteau croisé en laine bouillie. Chaud, élégant, conçu pour traverser les saisons froides.",
-      "details": [
-        "80% laine, 20% polyamide",
-        "Coupe croisée, ceinture incluse",
-        "Col châle, manches longues",
-        "Poches latérales fendues"
-      ],
-      "sizes": [
-        "S",
-        "M",
-        "L"
-      ],
+      "details": ["80% laine, 20% polyamide", "Coupe croisée, ceinture incluse", "Col châle, manches longues", "Poches latérales fendues"],
+      "sizes": ["S", "M", "L"],
       "colors": [
-        {
-          "name": "Camel",
-          "hex": "#C4955A"
-        },
-        {
-          "name": "Noir",
-          "hex": "#1A1A18"
-        }
+        { "name": "Camel", "hex": "#C4955A" },
+        { "name": "Noir", "hex": "#1A1A18" }
       ],
-      "images": [
-        "https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=800&q=80"
-      ],
+      "images": ["https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=800&q=80"],
       "inStock": false,
       "featured": false,
       "order": 4

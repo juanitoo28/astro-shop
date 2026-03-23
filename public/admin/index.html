@@ -133,8 +133,73 @@
     .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, transparent); }
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 900px) { .stats-grid { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 640px) { .sidebar { display: none; } .stats-grid { grid-template-columns: 1fr; } }
+    @keyframes spin   { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    /* ===== PUBLISH BUTTON ===== */
+    .publish-btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .55rem 1.25rem; border-radius: var(--radius);
+      font-size: 12px; font-weight: 600; letter-spacing: .06em;
+      background: var(--accent); color: #1A1A18;
+      border: none; cursor: pointer; transition: all .2s;
+      position: relative;
+    }
+    .publish-btn:hover { opacity: .88; transform: translateY(-1px); }
+    .publish-btn:disabled { opacity: .5; pointer-events: none; }
+    .publish-btn .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #1A1A18; opacity: .5;
+    }
+    .publish-btn.has-changes .dot {
+      background: #C25A5A; opacity: 1;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.4)} }
+    .publish-btn.has-changes { box-shadow: 0 0 0 3px rgba(212,184,150,.25); }
+
+    /* ===== MOBILE SIDEBAR ===== */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 98;
+    }
+    .sidebar-overlay.open { display: block; }
+    .mobile-topbar-btn {
+      display: none; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: var(--radius);
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); cursor: pointer;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed; left: 0; top: 0; bottom: 0;
+        z-index: 99; transform: translateX(-100%);
+        transition: transform .3s cubic-bezier(.4,0,.2,1);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-topbar-btn { display: flex; }
+      .topbar { gap: .75rem; }
+      .topbar__title { font-size: .85rem; }
+      .page-content { padding: 1rem; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .products-table th:nth-child(6),
+      .products-table td:nth-child(6),
+      .products-table th:nth-child(7),
+      .products-table td:nth-child(7) { display: none; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .products-table th:nth-child(4),
+      .products-table td:nth-child(4),
+      .products-table th:nth-child(5),
+      .products-table td:nth-child(5) { display: none; }
+      .modal { padding: 1.25rem; }
+    }
   </style>
 </head>
 <body>
@@ -154,7 +219,11 @@
 
 <div id="app">
   <div class="app-inner">
-    <aside class="sidebar">
+
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar__logo" id="sidebar-logo">ADMIN</div>
       <nav>
         <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
@@ -188,8 +257,20 @@
 
     <main class="main">
       <div class="topbar">
+        <!-- Hamburger mobile -->
+        <button class="mobile-topbar-btn" onclick="openSidebar()" aria-label="Menu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
         <div class="topbar__title" id="topbar-title">Tableau de bord</div>
-        <div id="topbar-actions"></div>
+        <div id="topbar-actions" style="display:flex;align-items:center;gap:.75rem">
+          <!-- Bouton Publier — toujours visible -->
+          <button class="publish-btn" id="publish-btn" onclick="publishAll()" title="Envoie toutes les modifications sur GitHub et déclenche un rebuild Netlify">
+            <span class="dot"></span>
+            Publier
+          </button>
+        </div>
       </div>
       <div class="page-content" id="page-content"></div>
     </main>
@@ -224,6 +305,29 @@ const API = {
 
 let state = { data: null, editingId: null, currentPage: 'dashboard', dragSrc: null };
 let authToken = localStorage.getItem('admin_token') || '';
+let pendingData = null; // Modifications en attente (pas encore publiées)
+
+// ── Pending changes ──────────────────────────────────────────
+function markChanged(newData) {
+  pendingData = JSON.parse(JSON.stringify(newData)); // deep copy
+  state.data = pendingData;
+  document.getElementById('publish-btn')?.classList.add('has-changes');
+}
+
+function clearPending() {
+  pendingData = null;
+  document.getElementById('publish-btn')?.classList.remove('has-changes');
+}
+
+// ── Sidebar mobile ────────────────────────────────────────────
+function openSidebar() {
+  document.getElementById('sidebar')?.classList.add('open');
+  document.getElementById('sidebar-overlay')?.classList.add('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('open');
+}
 
 // ── Helpers ──────────────────────────────────────────────────
 async function apiFetch(url, method = 'GET', body = null) {
@@ -247,9 +351,6 @@ function toast(msg, type = 'success') {
   toastTimer = setTimeout(() => el.className = '', 3500);
 }
 
-function showRebuildBanner() {
-  document.querySelectorAll('.rebuild-banner').forEach(b => b.classList.add('show'));
-}
 
 // ── AUTH ─────────────────────────────────────────────────────
 async function checkAuth() {
@@ -304,22 +405,57 @@ const PAGE_TITLES = { dashboard: 'Tableau de bord', products: 'Produits', catego
 
 function navigate(page) {
   state.currentPage = page;
+  closeSidebar();
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
   document.getElementById('topbar-title').textContent = PAGE_TITLES[page] || page;
   const actions = document.getElementById('topbar-actions');
-  actions.innerHTML = page === 'products'
-    ? `<button class="btn btn-primary" onclick="openModal()">+ Nouveau produit</button>` : '';
+  // Garder uniquement le bouton Publier (déjà dans le HTML)
+  // Ajouter le bouton Nouveau produit si sur la page produits
+  const existingNew = actions?.querySelector('.btn-new-product');
+  if (existingNew) existingNew.remove();
+  if (page === 'products') {
+    const newBtn = document.createElement('button');
+    newBtn.className = 'btn btn-secondary btn-new-product';
+    newBtn.innerHTML = '+ Nouveau produit';
+    newBtn.onclick = () => openModal();
+    newBtn.style.cssText = 'font-size:12px;padding:.45rem .9rem;border-radius:5px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer;white-space:nowrap';
+    actions?.insertBefore(newBtn, document.getElementById('publish-btn'));
+  }
   const content = document.getElementById('page-content');
   content.innerHTML = '';
   ({ dashboard: renderDashboard, products: renderProducts, categories: renderCategories, brand: renderBrand, hero: renderHero }[page] || renderDashboard)(content);
 }
 
-function rebuildNotice() {
-  return `<div class="rebuild-banner show">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    Modification enregistrée — Netlify rebuild en cours (~1-2 min)
-  </div>`;
+// ── Publier tout en un seul commit GitHub ────────────────────
+async function publishAll() {
+  if (!pendingData) {
+    toast('Aucune modification à publier', 'error');
+    return;
+  }
+  const btn = document.getElementById('publish-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Publication…`;
+
+  try {
+    // Envoie tout le data.json en un seul appel API
+    const r = await apiFetch(API.settings + '?section=all', 'POST', pendingData);
+    if (r.ok) {
+      clearPending();
+      toast('✓ Publié ! Netlify rebuild en cours (~1-2 min)');
+    } else {
+      toast(r.error || 'Erreur lors de la publication', 'error');
+    }
+  } catch(e) {
+    toast('Erreur réseau', 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<span class="dot"></span> Publier`;
 }
+
+function showRebuildBanner() {} // conservé pour compatibilité
+
+function rebuildNotice() { return ''; } // plus utilisé
 
 // ── DASHBOARD ────────────────────────────────────────────────
 function renderDashboard(el) {
@@ -352,16 +488,14 @@ function renderDashboard(el) {
 // ── PRODUCTS ─────────────────────────────────────────────────
 function renderProducts(el) {
   const products = state.data.products || []; const sym = state.data.brand?.currencySymbol || '€';
-  el.innerHTML = `
-    ${rebuildNotice()}
-    <div class="card" style="padding:0;overflow:hidden">
+  el.innerHTML = `    <div class="card" style="padding:0;overflow:hidden">
       <table class="products-table">
         <thead><tr><th style="width:32px"></th><th style="width:56px"></th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Stock</th><th>Vedette</th><th></th></tr></thead>
         <tbody id="products-tbody">${products.map(p=>productRow(p,sym)).join('')}</tbody>
       </table>
     </div>
     <p style="font-size:11px;color:var(--muted);margin-top:.75rem">☰ Glissez pour réordonner</p>`;
-  document.querySelector('.rebuild-banner').classList.remove('show');
+
   initDragDrop();
 }
 
@@ -398,19 +532,16 @@ async function dragDrop(e) {
   const ids = [...tbody.querySelectorAll('tr')].map(r => r.dataset.id);
   const indexed = Object.fromEntries(state.data.products.map(p => [p.id, p]));
   state.data.products = ids.map((id, i) => ({ ...indexed[id], order: i }));
-  const r = await apiFetch(API.products + '?action=reorder', 'POST', { ids });
-  if (r.ok) { toast('Ordre enregistré — rebuild en cours'); showRebuildBanner(); }
-  else toast(r.error || 'Erreur', 'error');
+  markChanged(state.data);
+  toast('Ordre modifié — clique Publier pour mettre en ligne');
 }
 
 async function deleteProduct(id) {
   if (!confirm('Supprimer ce produit ?')) return;
-  const r = await apiFetch(API.products + `?id=${id}`, 'DELETE');
-  if (r.ok) {
-    state.data.products = state.data.products.filter(p => p.id !== id);
-    toast('Produit supprimé — rebuild en cours');
-    navigate('products');
-  } else toast(r.error || 'Erreur', 'error');
+  state.data.products = state.data.products.filter(p => p.id !== id);
+  markChanged(state.data);
+  toast('Produit supprimé — clique Publier pour mettre en ligne');
+  navigate('products');
 }
 
 // ── MODAL PRODUIT ─────────────────────────────────────────────
@@ -566,11 +697,12 @@ async function handleImgDrop(e) {
 async function saveProduct() {
   const btn = document.getElementById('modal-save-btn'); btn.disabled = true;
   const payload = {
+    id: state.editingId || (slugifyLocal(document.getElementById('f-name').value) + '-' + Date.now()),
     name: document.getElementById('f-name').value.trim(),
     category: document.getElementById('f-cat').value,
     price: parseFloat(document.getElementById('f-price').value) || 0,
-    originalPrice: document.getElementById('f-orig').value,
-    badge: document.getElementById('f-badge').value.trim(),
+    originalPrice: document.getElementById('f-orig').value ? parseFloat(document.getElementById('f-orig').value) : null,
+    badge: document.getElementById('f-badge').value.trim() || null,
     description: document.getElementById('f-desc').value.trim(),
     details: JSON.parse(document.getElementById('f-details').value || '[]'),
     sizes: JSON.parse(document.getElementById('f-sizes').value || '[]'),
@@ -578,27 +710,30 @@ async function saveProduct() {
     images: JSON.parse(document.getElementById('f-images').value || '[]'),
     inStock: document.getElementById('f-instock').checked,
     featured: document.getElementById('f-featured').checked,
+    order: state.editingId ? (state.data.products.find(p => p.id === state.editingId)?.order ?? 0) : state.data.products.length,
   };
   if (!payload.name) { toast('Le nom est requis', 'error'); btn.disabled = false; return; }
-  let r;
   if (state.editingId) {
-    r = await apiFetch(API.products + `?id=${state.editingId}`, 'PUT', payload);
-    if (r.ok) { const idx = state.data.products.findIndex(p => p.id === state.editingId); if (idx > -1) state.data.products[idx] = r.product; }
+    const idx = state.data.products.findIndex(p => p.id === state.editingId);
+    if (idx > -1) state.data.products[idx] = payload;
   } else {
-    r = await apiFetch(API.products, 'POST', payload);
-    if (r.ok) state.data.products.push(r.product);
+    state.data.products.push(payload);
   }
+  markChanged(state.data);
   btn.disabled = false;
-  if (r.ok) { toast('Enregistré — rebuild Netlify en cours (~1-2 min)'); closeModal(); navigate('products'); }
-  else toast(r.error || 'Erreur', 'error');
+  toast('Produit enregistré — clique Publier pour mettre en ligne');
+  closeModal();
+  navigate('products');
+}
+
+function slugifyLocal(text) {
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
 
 // ── CATEGORIES ────────────────────────────────────────────────
 function renderCategories(el) {
   const cats = state.data.categories || [];
-  el.innerHTML = `
-    ${rebuildNotice().replace('class="rebuild-banner show"','class="rebuild-banner"')}
-    <div class="card" style="max-width:520px">
+  el.innerHTML = `    <div class="card" style="max-width:520px">
       <div class="card-title">Catégories <span style="color:var(--muted);font-weight:400">${cats.length}</span></div>
       <ul class="cat-list" id="cat-list">${cats.map((c,i)=>`<li class="cat-item"><span>${esc(c)}</span><button class="btn btn-danger btn-sm" onclick="deleteCat(${i})">Supprimer</button></li>`).join('')}</ul>
       <div style="display:flex;gap:.75rem;margin-top:1.25rem">
@@ -610,25 +745,25 @@ function renderCategories(el) {
 
 async function addCat() {
   const inp = document.getElementById('new-cat'); const val = inp.value.trim(); if (!val) return;
-  const cats = [...(state.data.categories||[]), val];
-  const r = await apiFetch(API.settings + '?section=categories', 'POST', { categories: cats });
-  if (r.ok) { state.data.categories = r.categories; inp.value = ''; toast('Catégorie ajoutée — rebuild en cours'); renderCategories(document.getElementById('page-content')); }
-  else toast(r.error || 'Erreur', 'error');
+  state.data.categories = [...(state.data.categories||[]), val];
+  markChanged(state.data);
+  inp.value = '';
+  toast('Catégorie ajoutée — clique Publier pour mettre en ligne');
+  renderCategories(document.getElementById('page-content'));
 }
 
 async function deleteCat(i) {
   const cats = [...(state.data.categories||[])]; cats.splice(i, 1);
-  const r = await apiFetch(API.settings + '?section=categories', 'POST', { categories: cats });
-  if (r.ok) { state.data.categories = r.categories; toast('Catégorie supprimée'); renderCategories(document.getElementById('page-content')); }
-  else toast(r.error || 'Erreur', 'error');
+  state.data.categories = cats;
+  markChanged(state.data);
+  toast('Catégorie supprimée');
+  renderCategories(document.getElementById('page-content'));
 }
 
 // ── BRAND ─────────────────────────────────────────────────────
 function renderBrand(el) {
   const b = state.data.brand || {};
-  el.innerHTML = `
-    ${rebuildNotice().replace('class="rebuild-banner show"','class="rebuild-banner"')}
-    <div class="card" style="max-width:640px">
+  el.innerHTML = `    <div class="card" style="max-width:640px">
       <div class="card-title">Identité de la marque</div>
       <div class="grid-2">
         <div class="field"><label>Nom</label><input id="b-name" value="${esc(b.name||'')}" /></div>
@@ -642,21 +777,23 @@ function renderBrand(el) {
 }
 
 async function saveBrand() {
-  const r = await apiFetch(API.settings + '?section=brand', 'POST', {
-    name: document.getElementById('b-name').value, logo: document.getElementById('b-logo').value,
-    tagline: document.getElementById('b-tagline').value, description: document.getElementById('b-desc').value,
+  state.data.brand = {
+    ...state.data.brand,
+    name:           document.getElementById('b-name').value,
+    logo:           document.getElementById('b-logo').value,
+    tagline:        document.getElementById('b-tagline').value,
+    description:    document.getElementById('b-desc').value,
     currencySymbol: document.getElementById('b-sym').value,
-  });
-  if (r.ok) { state.data.brand = r.brand; document.getElementById('sidebar-logo').textContent = r.brand.logo||'ADMIN'; toast('Marque enregistrée — rebuild en cours'); showRebuildBanner(); }
-  else toast(r.error || 'Erreur', 'error');
+  };
+  markChanged(state.data);
+  document.getElementById('sidebar-logo').textContent = state.data.brand.logo || 'ADMIN';
+  toast('Marque enregistrée — clique Publier pour mettre en ligne');
 }
 
 // ── HERO & ABOUT ──────────────────────────────────────────────
 function renderHero(el) {
   const h = state.data.hero||{}; const a = state.data.about||{};
-  el.innerHTML = `
-    ${rebuildNotice().replace('class="rebuild-banner show"','class="rebuild-banner"')}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:900px">
+  el.innerHTML = `    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:900px">
       <div class="card">
         <div class="card-title">Section Hero</div>
         <div class="field"><label>Titre (\\n = saut de ligne)</label><textarea id="h-headline">${esc(h.headline||'')}</textarea></div>
@@ -683,12 +820,16 @@ function renderHero(el) {
 }
 
 async function saveHero() {
-  const r = await apiFetch(API.settings + '?section=hero', 'POST', {
-    headline: document.getElementById('h-headline').value, subheadline: document.getElementById('h-sub').value,
-    cta: document.getElementById('h-cta').value, ctaHref: document.getElementById('h-href').value,
-    badge: document.getElementById('h-badge').value,
-  });
-  if (r.ok) { toast('Hero enregistré — rebuild en cours'); showRebuildBanner(); } else toast(r.error, 'error');
+  state.data.hero = {
+    ...state.data.hero,
+    headline:    document.getElementById('h-headline').value,
+    subheadline: document.getElementById('h-sub').value,
+    cta:         document.getElementById('h-cta').value,
+    ctaHref:     document.getElementById('h-href').value,
+    badge:       document.getElementById('h-badge').value,
+  };
+  markChanged(state.data);
+  toast('Hero enregistré — clique Publier pour mettre en ligne');
 }
 
 function addValue() {
@@ -700,11 +841,17 @@ function addValue() {
 
 async function saveAbout() {
   const rows = document.querySelectorAll('#values-list > div');
-  const values = [...rows].map((_,i) => ({ icon: document.getElementById(`vi-${i}`)?.value||'', label: document.getElementById(`vl-${i}`)?.value||'' })).filter(v => v.label);
-  const r = await apiFetch(API.settings + '?section=about', 'POST', {
-    title: document.getElementById('a-title').value, text: document.getElementById('a-text').value, values,
-  });
-  if (r.ok) { toast('À propos enregistré — rebuild en cours'); showRebuildBanner(); } else toast(r.error, 'error');
+  const values = [...rows].map((_,i) => ({
+    icon:  document.getElementById(`vi-${i}`)?.value || '',
+    label: document.getElementById(`vl-${i}`)?.value || '',
+  })).filter(v => v.label);
+  state.data.about = {
+    title:  document.getElementById('a-title').value,
+    text:   document.getElementById('a-text').value,
+    values,
+  };
+  markChanged(state.data);
+  toast('À propos enregistré — clique Publier pour mettre en ligne');
 }
 
 // ── INIT ─────────────────────────────────────────────────────

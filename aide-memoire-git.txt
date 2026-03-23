@@ -1,0 +1,118 @@
+# 📋 Aide-mémoire Git — Astro Shop Netlify
+# ============================================================
+#  Toutes les commandes utilisées sur ce projet
+# ============================================================
+
+
+# ══════════════════════════════════════════════════════════════
+#  🔁 ROUTINE QUOTIDIENNE
+#  À faire AVANT de commencer à travailler en local
+# ══════════════════════════════════════════════════════════════
+
+git pull                        # Récupère les derniers changements depuis GitHub
+                                # (inclut les modifs de data.json faites via l'admin)
+
+
+# ══════════════════════════════════════════════════════════════
+#  ✏️  APRÈS AVOIR MODIFIÉ DES FICHIERS EN LOCAL
+# ══════════════════════════════════════════════════════════════
+
+git status                      # Voir quels fichiers ont été modifiés
+
+git add .                       # Ajouter TOUS les fichiers modifiés
+git add nom-du-fichier.ts       # Ajouter UN fichier spécifique
+
+git commit -m "description"     # Enregistrer les changements avec un message
+                                # Ex: git commit -m "fix: correction du hero"
+                                # Ex: git commit -m "feat: ajout page contact"
+
+git push                        # Envoyer les commits sur GitHub
+                                # → Netlify rebuilde automatiquement (~1-2 min)
+
+
+# ══════════════════════════════════════════════════════════════
+#  ⚠️  SI GITHUB REJETTE TON PUSH (conflit)
+#  Arrive quand l'admin a modifié data.json entre-temps
+# ══════════════════════════════════════════════════════════════
+
+git pull --rebase origin main   # Récupère les changements GitHub + place
+                                # tes commits par-dessus proprement
+git push                        # Puis renvoie
+
+
+# ══════════════════════════════════════════════════════════════
+#  🔗 GÉRER L'URL DU REPO DISTANT
+# ══════════════════════════════════════════════════════════════
+
+git remote -v                               # Voir l'URL GitHub actuelle
+
+git remote set-url origin NOUVELLE_URL      # Corriger l'URL si mauvaise
+# Ex: git remote set-url origin https://github.com/juanitoo28/astro-shop.git
+
+
+# ══════════════════════════════════════════════════════════════
+#  📜 HISTORIQUE
+# ══════════════════════════════════════════════════════════════
+
+git log --oneline               # Voir les derniers commits (résumé)
+git log --oneline -10           # Les 10 derniers seulement
+
+
+# ══════════════════════════════════════════════════════════════
+#  🌍 VARIABLES D'ENVIRONNEMENT NETLIFY
+#  Netlify → ton site → Site configuration → Environment variables
+# ══════════════════════════════════════════════════════════════
+
+# Variables à configurer (et leurs valeurs actuelles) :
+
+ADMIN_PASSWORD      →  ton-mot-de-passe-admin
+GITHUB_TOKEN        →  ghp_xxxxxxxxxxxxxxxxxxxx
+GITHUB_REPO         →  juanitoo28/astro-shop
+GITHUB_BRANCH       →  main
+GITHUB_DATA_PATH    →  public/admin/data.json   ← important ! (déplacé dans public/)
+
+# ⚠️  Après avoir modifié une variable sur Netlify :
+#     Deploys → Trigger deploy → Deploy site
+#     (le build ne prend pas en compte les nouvelles variables automatiquement)
+
+
+# ══════════════════════════════════════════════════════════════
+#  🔑 RENOUVELER LE GITHUB TOKEN (expire selon ta config)
+# ══════════════════════════════════════════════════════════════
+
+# 1. Aller sur github.com/settings/tokens
+# 2. Générer un nouveau token (cocher "repo")
+# 3. Mettre à jour GITHUB_TOKEN dans Netlify
+# 4. Trigger deploy
+
+
+# ══════════════════════════════════════════════════════════════
+#  🚀 WORKFLOW COMPLET TYPE
+# ══════════════════════════════════════════════════════════════
+
+# 1. Ouvrir VS Code sur le projet
+git pull                            # Toujours commencer par ça
+
+# 2. Faire tes modifications dans VS Code...
+
+# 3. Vérifier ce qui a changé
+git status
+
+# 4. Ajouter et committer
+git add .
+git commit -m "feat: description de ce que tu as fait"
+
+# 5. Si GitHub rejette le push (conflit data.json) :
+git pull --rebase origin main
+
+# 6. Envoyer sur GitHub → Netlify rebuilde
+git push
+
+# ══════════════════════════════════════════════════════════════
+#  📍 URLS DU PROJET
+# ══════════════════════════════════════════════════════════════
+
+# Boutique  →  https://astroshops.netlify.app/
+# Admin     →  https://astroshops.netlify.app/admin/
+# GitHub    →  https://github.com/juanitoo28/astro-shop
+# Netlify   →  https://app.netlify.com
