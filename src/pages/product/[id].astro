@@ -18,6 +18,11 @@ const discountPct = hasDiscount
 ---
 
 <Layout title={product.name} description={product.description}>
+<script define:vars={{ stockData: product.stock ?? null, productSizes: product.sizes, productColors: product.colors.map(c => c.name) }}>
+  window.__STOCK__ = stockData;
+  window.__SIZES__ = productSizes;
+  window.__COLORS__ = productColors;
+</script>
 
   <div class="product-page">
     <div class="container">
@@ -99,6 +104,7 @@ const discountPct = hasDiscount
                   aria-label={color.name}
                 ></button>
               ))}
+              <span class="stock-info" id="color-stock-info"></span>
             </div>
           </div>
 
@@ -112,11 +118,11 @@ const discountPct = hasDiscount
                 <button
                   class="size-btn"
                   data-size={size}
-                  disabled={!product.inStock}
                 >
                   {size}
                 </button>
               ))}
+              <span class="stock-info" id="size-stock-info"></span>
             </div>
             <a href="#" class="product-option__guide">Guide des tailles</a>
           </div>
@@ -125,7 +131,6 @@ const discountPct = hasDiscount
           <button
             class="btn btn-primary product-atc"
             id="add-to-cart"
-            disabled={!product.inStock}
             data-product={JSON.stringify({
               id: product.id,
               name: product.name,
@@ -409,6 +414,45 @@ const discountPct = hasDiscount
   text-decoration: line-through;
 }
 
+/* Stock indicators */
+.stock-info {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  margin-top: 0.35rem;
+  min-height: 1rem;
+  display: block;
+}
+
+.stock-info.low  { color: #C87941; }
+.stock-info.out  { color: #C25A5A; }
+.stock-info.good { color: #6A9E7A; }
+
+.size-btn.out-of-stock {
+  opacity: 0.3;
+  cursor: not-allowed;
+  text-decoration: line-through;
+  pointer-events: none;
+}
+
+.color-swatch.out-of-stock {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+  position: relative;
+}
+
+.stock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 100px;
+  margin-bottom: 0.5rem;
+}
+.stock-badge.low  { background: rgba(200,121,65,.12); color: #C87941; }
+.stock-badge.good { background: rgba(106,158,122,.12); color: #6A9E7A; }
+
 .product-option__guide {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -554,81 +598,168 @@ const discountPct = hasDiscount
 </style>
 
 <script>
-// Gallery thumbnails
+// ── Stock helpers ─────────────────────────────────────────────
+const stock: any = (window as any).__STOCK__ ?? null;
+
+function getQty(size: string, color: string): number {
+  if (!stock) return 99; // pas de gestion stock → illimité
+  return stock.bySizeColor?.[size]?.[color] ?? stock.global ?? 0;
+}
+
+function getTotalForSize(size: string): number {
+  if (!stock) return 99;
+  const byColor = stock.bySizeColor?.[size];
+  if (!byColor) return stock.global ?? 0;
+  return Object.values(byColor).reduce((s: number, v: any) => s + (v as number), 0);
+}
+
+function getTotalForColor(color: string): number {
+  if (!stock) return 99;
+  if (!stock.bySizeColor) return stock.global ?? 0;
+  return Object.values(stock.bySizeColor).reduce((s: number, byColor: any) => {
+    return s + ((byColor as any)[color] ?? 0);
+  }, 0);
+}
+
+function stockLabel(qty: number): { text: string; cls: string } {
+  if (qty === 0) return { text: 'Épuisé',                  cls: 'out' };
+  if (qty <= 3)  return { text: `Plus que ${qty} en stock`, cls: 'low' };
+  return { text: '', cls: 'good' };
+}
+
+// ── Init tailles ───────────────────────────────────────────────
+function initSizes() {
+  document.querySelectorAll<HTMLButtonElement>('.size-btn').forEach(btn => {
+    const size = btn.dataset.size || '';
+    const total = getTotalForSize(size);
+    if (total === 0) {
+      btn.classList.add('out-of-stock');
+      btn.disabled = true;
+    }
+  });
+}
+
+// ── Init couleurs ──────────────────────────────────────────────
+function initColors() {
+  document.querySelectorAll<HTMLButtonElement>('.color-swatch').forEach(btn => {
+    const color = btn.dataset.color || '';
+    const total = getTotalForColor(color);
+    if (total === 0) btn.classList.add('out-of-stock');
+  });
+}
+
+// ── Mettre à jour les infos stock selon sélection ─────────────
+let selectedSize  = '';
+let selectedColor = (document.querySelector<HTMLButtonElement>('.color-swatch.active')?.dataset.color) || '';
+
+function updateStockInfo() {
+  const sizeInfo  = document.getElementById('size-stock-info');
+  const colorInfo = document.getElementById('color-stock-info');
+  const atcBtn    = document.getElementById('add-to-cart') as HTMLButtonElement;
+
+  if (selectedSize && selectedColor) {
+    const qty = getQty(selectedSize, selectedColor);
+    const { text, cls } = stockLabel(qty);
+
+    if (sizeInfo) { sizeInfo.textContent = text; sizeInfo.className = `stock-info ${cls}`; }
+    if (colorInfo) { colorInfo.textContent = ''; }
+
+    if (qty === 0) {
+      atcBtn.disabled = true;
+      atcBtn.textContent = 'Épuisé';
+    } else {
+      atcBtn.disabled = false;
+      atcBtn.textContent = 'Ajouter au panier';
+    }
+
+    // Mettre à jour les boutons taille en fonction de la couleur sélectionnée
+    document.querySelectorAll<HTMLButtonElement>('.size-btn').forEach(btn => {
+      const size = btn.dataset.size || '';
+      const q = getQty(size, selectedColor);
+      btn.classList.toggle('out-of-stock', q === 0);
+      btn.disabled = q === 0;
+    });
+
+  } else if (selectedColor && !selectedSize) {
+    // Info par couleur seulement
+    const total = getTotalForColor(selectedColor);
+    const { text, cls } = stockLabel(total);
+    if (colorInfo) { colorInfo.textContent = text; colorInfo.className = `stock-info ${cls}`; }
+    if (sizeInfo)  { sizeInfo.textContent = ''; }
+  }
+}
+
+// ── Gallery thumbnails ────────────────────────────────────────
 document.querySelectorAll<HTMLButtonElement>('.thumb-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const src = btn.dataset.src;
     const mainImg = document.getElementById('main-img') as HTMLImageElement;
     if (mainImg && src) {
       mainImg.style.opacity = '0';
-      setTimeout(() => {
-        mainImg.src = src;
-        mainImg.style.opacity = '1';
-      }, 150);
+      setTimeout(() => { mainImg.src = src; mainImg.style.opacity = '1'; }, 150);
     }
     document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   });
 });
 
-// Color selector
+// ── Color selector ────────────────────────────────────────────
 document.querySelectorAll<HTMLButtonElement>('.color-swatch').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (btn.classList.contains('out-of-stock')) return;
     document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    selectedColor = btn.dataset.color || '';
     const label = document.getElementById('selected-color');
-    if (label) label.textContent = btn.dataset.color || '';
+    if (label) label.textContent = selectedColor;
+    updateStockInfo();
   });
 });
 
-// Size selector
-let selectedSize = '';
+// ── Size selector ─────────────────────────────────────────────
 document.querySelectorAll<HTMLButtonElement>('.size-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (btn.disabled) return;
     document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selectedSize = btn.dataset.size || '';
     const label = document.getElementById('selected-size');
     if (label) label.textContent = selectedSize;
+    updateStockInfo();
   });
 });
 
-// Add to cart
+// ── Add to cart ───────────────────────────────────────────────
 const atcBtn = document.getElementById('add-to-cart') as HTMLButtonElement;
 atcBtn?.addEventListener('click', () => {
   if (!selectedSize) {
-    // Highlight size selector
     const sizeSection = document.querySelector('.product-option__sizes');
     sizeSection?.classList.add('shake');
     setTimeout(() => sizeSection?.classList.remove('shake'), 500);
     return;
   }
-
-  const selectedColorEl = document.querySelector<HTMLButtonElement>('.color-swatch.active');
-  const selectedColor = selectedColorEl?.dataset.color || '';
+  const qty = getQty(selectedSize, selectedColor);
+  if (qty === 0) return;
 
   const data = JSON.parse(atcBtn.dataset.product || '{}');
-  const event = new CustomEvent('add-to-cart', {
-    detail: {
-      item: {
-        ...data,
-        size: selectedSize,
-        color: selectedColor,
-      }
-    },
+  document.dispatchEvent(new CustomEvent('add-to-cart', {
+    detail: { item: { ...data, size: selectedSize, color: selectedColor } },
     bubbles: true,
-  });
-  document.dispatchEvent(event);
+  }));
 
-  // Feedback
   const original = atcBtn.textContent;
   atcBtn.textContent = '✓ Ajouté';
   atcBtn.disabled = true;
   setTimeout(() => {
-    atcBtn.textContent = original;
+    atcBtn.textContent = original || 'Ajouter au panier';
     atcBtn.disabled = false;
   }, 1500);
 });
+
+// ── Init ──────────────────────────────────────────────────────
+initSizes();
+initColors();
+updateStockInfo();
 </script>
 
 <style is:global>

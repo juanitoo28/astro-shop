@@ -242,6 +242,10 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           Marque
         </div>
+        <div class="nav-item" data-page="stock" onclick="navigate('stock')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          Stocks
+        </div>
         <div class="nav-item" data-page="hero" onclick="navigate('hero')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
           Hero & À propos
@@ -401,7 +405,7 @@ async function loadData() {
 }
 
 // ── NAVIGATION ───────────────────────────────────────────────
-const PAGE_TITLES = { dashboard: 'Tableau de bord', products: 'Produits', categories: 'Catégories', brand: 'Marque', hero: 'Hero & À propos' };
+const PAGE_TITLES = { dashboard: 'Tableau de bord', products: 'Produits', categories: 'Catégories', brand: 'Marque', hero: 'Hero & À propos', stock: 'Gestion des stocks' };
 
 function navigate(page) {
   state.currentPage = page;
@@ -423,7 +427,7 @@ function navigate(page) {
   }
   const content = document.getElementById('page-content');
   content.innerHTML = '';
-  ({ dashboard: renderDashboard, products: renderProducts, categories: renderCategories, brand: renderBrand, hero: renderHero }[page] || renderDashboard)(content);
+  ({ dashboard: renderDashboard, products: renderProducts, categories: renderCategories, brand: renderBrand, hero: renderHero, stock: renderStock }[page] || renderDashboard)(content);
 }
 
 // ── Publier tout en un seul commit GitHub ────────────────────
@@ -711,6 +715,9 @@ async function saveProduct() {
     inStock: document.getElementById('f-instock').checked,
     featured: document.getElementById('f-featured').checked,
     order: state.editingId ? (state.data.products.find(p => p.id === state.editingId)?.order ?? 0) : state.data.products.length,
+    stock: state.editingId
+      ? (state.data.products.find(p => p.id === state.editingId)?.stock ?? null)
+      : null,
   };
   if (!payload.name) { toast('Le nom est requis', 'error'); btn.disabled = false; return; }
   if (state.editingId) {
@@ -852,6 +859,213 @@ async function saveAbout() {
   };
   markChanged(state.data);
   toast('À propos enregistré — clique Publier pour mettre en ligne');
+}
+
+// ── STOCK ─────────────────────────────────────────────────────
+function renderStock(el) {
+  const products = state.data.products || [];
+  const sym = state.data.brand?.currencySymbol || '€';
+
+  // Calcule le statut global d'un produit depuis son stock
+  function globalStatus(p) {
+    const s = p.stock;
+    if (!s) return { qty: '—', cls: 'muted' };
+    const bsc = s.bySizeColor;
+    if (bsc && Object.keys(bsc).length) {
+      const vals = Object.values(bsc).flatMap(c => Object.values(c));
+      const total = vals.reduce((a, b) => a + b, 0);
+      const min   = Math.min(...vals);
+      if (total === 0) return { qty: 0,     cls: 'danger' };
+      if (min   <= 3)  return { qty: total, cls: 'warn'   };
+      return { qty: total, cls: 'ok' };
+    }
+    const g = s.global ?? 0;
+    if (g === 0) return { qty: 0, cls: 'danger' };
+    if (g <= 3)  return { qty: g, cls: 'warn' };
+    return { qty: g, cls: 'ok' };
+  }
+
+  const statusBadge = (cls, qty) => {
+    const map = {
+      danger: ['badge-danger',  qty === 0 ? 'Épuisé' : qty],
+      warn:   ['badge-warn',    qty],
+      ok:     ['badge-success', qty],
+      muted:  ['',              '—'],
+    };
+    const [bcls, label] = map[cls] || ['', '—'];
+    return `<span class="badge ${bcls}" style="${cls==='warn'?'background:rgba(200,121,65,.15);color:#C87941':''}">${label}</span>`;
+  };
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
+      <p style="font-size:12px;color:var(--muted)">Clique sur un produit pour modifier ses stocks par taille et couleur.</p>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.5rem">
+      <table class="products-table">
+        <thead><tr>
+          <th style="width:56px"></th>
+          <th>Produit</th>
+          <th>Catégorie</th>
+          <th>Stock total</th>
+          <th>Variantes épuisées</th>
+          <th></th>
+        </tr></thead>
+        <tbody>
+          ${products.map(p => {
+            const { qty, cls } = globalStatus(p);
+            const bsc = p.stock?.bySizeColor || {};
+            const outCount = Object.values(bsc)
+              .flatMap(c => Object.values(c))
+              .filter(v => v === 0).length;
+            const totalVariants = Object.values(bsc)
+              .flatMap(c => Object.values(c)).length;
+            return `<tr>
+              <td><img class="product-thumb" src="${p.images?.[0]||''}" onerror="this.style.visibility='hidden'" /></td>
+              <td><strong>${p.name}</strong></td>
+              <td style="color:var(--muted)">${p.category}</td>
+              <td>${statusBadge(cls, qty)}</td>
+              <td style="font-size:12px;color:${outCount>0?'#C25A5A':'var(--muted)'}">
+                ${totalVariants > 0 ? `${outCount} / ${totalVariants}` : '—'}
+              </td>
+              <td><button class="btn btn-secondary btn-sm" onclick="openStockEditor('${p.id}')">Modifier</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ÉDITEUR STOCK (affiché en dessous quand on clique Modifier) -->
+    <div id="stock-editor" style="display:none"></div>
+  `;
+}
+
+function openStockEditor(productId) {
+  const p = state.data.products.find(x => x.id === productId);
+  if (!p) return;
+
+  // Initialise stock si absent
+  if (!p.stock) {
+    p.stock = {
+      global: p.inStock ? 10 : 0,
+      bySizeColor: Object.fromEntries(
+        p.sizes.map(s => [s, Object.fromEntries(p.colors.map(c => [c.name, p.inStock ? 10 : 0]))])
+      )
+    };
+  }
+
+  const editor = document.getElementById('stock-editor');
+  if (!editor) return;
+  editor.style.display = 'block';
+  editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const sizes  = p.sizes  || [];
+  const colors = p.colors || [];
+
+  // Construit le tableau taille × couleur
+  const tableHeader = `<tr><th style="min-width:80px">Taille \\ Couleur</th>${colors.map(c =>
+    `<th><div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <span style="width:16px;height:16px;border-radius:50%;background:${c.hex};border:1px solid rgba(0,0,0,.15);display:inline-block"></span>
+      <span style="font-size:10px">${c.name}</span>
+    </div></th>`
+  ).join('')}</tr>`;
+
+  const tableRows = sizes.map(size => {
+    const cells = colors.map(color => {
+      const qty = p.stock.bySizeColor?.[size]?.[color.name] ?? 0;
+      const cls = qty === 0 ? 'color:#C25A5A' : qty <= 3 ? 'color:#C87941' : 'color:#6A9E7A';
+      return `<td>
+        <input
+          type="number" min="0" max="9999"
+          value="${qty}"
+          data-size="${size}" data-color="${color.name}"
+          onchange="updateStockCell('${productId}', this)"
+          style="width:68px;text-align:center;font-weight:500;${cls}"
+        />
+      </td>`;
+    }).join('');
+    return `<tr><td style="font-size:12px;font-weight:500;color:var(--text)">${size}</td>${cells}</tr>`;
+  }).join('');
+
+  editor.innerHTML = `
+    <div class="card">
+      <div class="card-title" style="margin-bottom:1rem">
+        <span>Stocks — ${p.name}</span>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('stock-editor').style.display='none'">✕ Fermer</button>
+      </div>
+
+      <div style="overflow-x:auto;margin-bottom:1.5rem">
+        <table class="products-table" style="min-width:400px">
+          <thead>${tableHeader}</thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;padding-top:1rem;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <span style="font-size:12px;color:var(--muted)">Tout mettre à :</span>
+          <input type="number" min="0" id="bulk-qty" value="10" style="width:72px;text-align:center" />
+          <button class="btn btn-secondary btn-sm" onclick="bulkSetStock('${productId}')">Appliquer à tous</button>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-left:auto">
+          <span style="font-size:11px;color:var(--muted);align-self:center">
+            <span style="color:#6A9E7A">●</span> OK &nbsp;
+            <span style="color:#C87941">●</span> Faible (≤3) &nbsp;
+            <span style="color:#C25A5A">●</span> Épuisé
+          </span>
+        </div>
+      </div>
+
+      <p style="font-size:11px;color:var(--muted);margin-top:.75rem">
+        Les modifications sont sauvegardées localement. Clique <strong>Publier</strong> en haut pour mettre en ligne.
+      </p>
+    </div>
+  `;
+}
+
+function updateStockCell(productId, input) {
+  const p = state.data.products.find(x => x.id === productId);
+  if (!p || !p.stock) return;
+
+  const size  = input.dataset.size;
+  const color = input.dataset.color;
+  const qty   = Math.max(0, parseInt(input.value) || 0);
+
+  if (!p.stock.bySizeColor[size]) p.stock.bySizeColor[size] = {};
+  p.stock.bySizeColor[size][color] = qty;
+
+  // Recalcule le stock global
+  const allQtys = Object.values(p.stock.bySizeColor).flatMap(c => Object.values(c));
+  p.stock.global = allQtys.reduce((a, b) => a + b, 0);
+
+  // Sync inStock
+  p.inStock = p.stock.global > 0;
+
+  // Couleur du champ
+  input.style.color = qty === 0 ? '#C25A5A' : qty <= 3 ? '#C87941' : '#6A9E7A';
+
+  markChanged(state.data);
+}
+
+function bulkSetStock(productId) {
+  const qty = Math.max(0, parseInt((document.getElementById('bulk-qty') as HTMLInputElement).value) || 0);
+  const p   = state.data.products.find(x => x.id === productId);
+  if (!p || !p.stock) return;
+
+  // Met à jour toutes les cellules
+  Object.keys(p.stock.bySizeColor).forEach(size => {
+    Object.keys(p.stock.bySizeColor[size]).forEach(color => {
+      p.stock.bySizeColor[size][color] = qty;
+    });
+  });
+  p.stock.global = qty * Object.values(p.stock.bySizeColor).flatMap(c => Object.values(c)).length;
+  p.inStock = qty > 0;
+
+  markChanged(state.data);
+  toast('Stock mis à jour — clique Publier pour mettre en ligne');
+  openStockEditor(productId); // re-render
+  renderStock(document.getElementById('page-content')); // refresh table
+  // Re-ouvre l'éditeur
+  setTimeout(() => openStockEditor(productId), 50);
 }
 
 // ── INIT ─────────────────────────────────────────────────────
