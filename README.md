@@ -126,3 +126,4 @@ Le client modifie ses produits via `/admin/` → les changements sont commitées
 - Variables sensibles uniquement côté serveur (Netlify Functions)
 - GitHub Token jamais exposé au client
 - Pour renforcer : ajouter Netlify Identity ou une protection par mot de passe HTTP au niveau du site
+# astro-shop
