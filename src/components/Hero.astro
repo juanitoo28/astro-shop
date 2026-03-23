@@ -1,0 +1,220 @@
+---
+import { siteConfig } from '../data/config';
+const { hero } = siteConfig;
+---
+
+<section class="hero">
+  <div class="hero__bg"></div>
+  <div class="container hero__inner">
+    <div class="hero__content">
+      {hero.badge && (
+        <span class="hero__badge">{hero.badge}</span>
+      )}
+      <h1 class="hero__headline">
+        {hero.headline.split('\n').map((line, i) => (
+          <span class="hero__headline-line" style={`animation-delay: ${i * 0.12}s`}>{line}</span>
+        ))}
+      </h1>
+      <p class="hero__sub">{hero.subheadline}</p>
+      <a href={hero.ctaHref} class="btn btn-primary hero__cta">
+        {hero.cta}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </a>
+    </div>
+    <div class="hero__visual">
+      <div class="hero__img-wrapper">
+        <img
+          src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=900&q=85"
+          alt="Collection hero"
+          class="hero__img"
+          loading="eager"
+        />
+      </div>
+      <div class="hero__pill">
+        <span class="hero__pill-label">Collection</span>
+        <span class="hero__pill-value">SS 2025</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero__scroll">
+    <span>Défiler</span>
+    <div class="hero__scroll-line"></div>
+  </div>
+</section>
+
+<style>
+.hero {
+  position: relative;
+  min-height: 100svh;
+  padding-top: var(--nav-height);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 70% 50%, var(--bg-alt) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero__inner {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+/* LEFT */
+.hero__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.hero__badge {
+  display: inline-flex;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-radius: 100px;
+  animation: fadeUp 0.5s ease forwards;
+}
+
+.hero__headline {
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(3.5rem, 7vw, 6.5rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.0;
+}
+
+.hero__headline-line {
+  display: block;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards;
+}
+
+.hero__sub {
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  animation: fadeUp 0.6s 0.3s ease forwards;
+  opacity: 0;
+}
+
+.hero__cta {
+  opacity: 0;
+  animation: fadeUp 0.6s 0.4s ease forwards;
+}
+
+/* RIGHT */
+.hero__visual {
+  position: relative;
+  animation: fadeIn 0.8s 0.2s ease forwards;
+  opacity: 0;
+}
+
+.hero__img-wrapper {
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.hero__img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.hero__img-wrapper:hover .hero__img {
+  transform: scale(1.03);
+}
+
+.hero__pill {
+  position: absolute;
+  bottom: -1.5rem;
+  left: -1.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+
+.hero__pill-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.hero__pill-value {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+/* SCROLL INDICATOR */
+.hero__scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  animation: fadeIn 1s 0.8s ease forwards;
+  opacity: 0;
+}
+
+.hero__scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--text-muted), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.2); }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .hero__inner {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding-top: 2rem;
+  }
+
+  .hero__visual { order: -1; }
+
+  .hero__img-wrapper { aspect-ratio: 4/3; }
+
+  .hero__headline {
+    font-size: clamp(2.8rem, 10vw, 4rem);
+  }
+
+  .hero__pill {
+    left: auto;
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+</style>

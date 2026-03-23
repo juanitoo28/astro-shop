@@ -1,0 +1,199 @@
+---
+import type { Product } from '../data/config';
+import { siteConfig } from '../data/config';
+
+interface Props {
+  product: Product;
+  index?: number;
+}
+
+const { product, index = 0 } = Astro.props;
+const delay = (index % 4) * 0.08;
+---
+
+<article
+  class="product-card"
+  style={`animation-delay: ${delay}s`}
+  data-id={product.id}
+>
+  <a href={`/product/${product.id}`} class="product-card__img-link">
+    <div class="product-card__img-wrapper">
+      <img
+        src={product.images[0]}
+        alt={product.name}
+        class="product-card__img product-card__img--main"
+        loading="lazy"
+      />
+      {product.images[1] && (
+        <img
+          src={product.images[1]}
+          alt={`${product.name} — vue 2`}
+          class="product-card__img product-card__img--hover"
+          loading="lazy"
+        />
+      )}
+      {!product.inStock && (
+        <div class="product-card__soldout">Épuisé</div>
+      )}
+      {product.badge && product.inStock && (
+        <span class="product-card__badge">{product.badge}</span>
+      )}
+    </div>
+    <div class="product-card__colors">
+      {product.colors.map(color => (
+        <span
+          class="product-card__color-dot"
+          style={`background: ${color.hex}`}
+          title={color.name}
+        ></span>
+      ))}
+    </div>
+  </a>
+  <div class="product-card__info">
+    <div class="product-card__meta">
+      <span class="product-card__category">{product.category}</span>
+    </div>
+    <h3 class="product-card__name">
+      <a href={`/product/${product.id}`}>{product.name}</a>
+    </h3>
+    <div class="product-card__pricing">
+      <span class="product-card__price">
+        {product.price}{siteConfig.brand.currencySymbol}
+      </span>
+      {product.originalPrice && (
+        <span class="product-card__original">
+          {product.originalPrice}{siteConfig.brand.currencySymbol}
+        </span>
+      )}
+    </div>
+  </div>
+</article>
+
+<style>
+.product-card {
+  opacity: 0;
+  animation: fadeUp 0.5s ease forwards;
+}
+
+.product-card__img-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.product-card__img-wrapper {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+  margin-bottom: 0.85rem;
+}
+
+.product-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: opacity 0.4s ease, transform 0.5s ease;
+}
+
+.product-card__img--hover {
+  opacity: 0;
+}
+
+.product-card__img-wrapper:hover .product-card__img--main {
+  opacity: 0;
+  transform: scale(1.04);
+}
+.product-card__img-wrapper:hover .product-card__img--hover {
+  opacity: 1;
+  transform: scale(1.0);
+}
+
+.product-card__soldout {
+  position: absolute;
+  inset: 0;
+  background: rgba(250, 250, 248, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.product-card__badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 100px;
+}
+
+.product-card__colors {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.product-card__color-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.product-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.product-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.product-card__category {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.product-card__name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.product-card__name a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.product-card__pricing {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.product-card__price {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.product-card__original {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+</style>

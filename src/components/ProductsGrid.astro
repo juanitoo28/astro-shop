@@ -1,0 +1,135 @@
+---
+import { products } from '../data/config';
+import ProductCard from './ProductCard.astro';
+
+const categories = ['Tous', ...new Set(products.map(p => p.category))];
+---
+
+<section class="products-section" id="products">
+  <div class="container">
+    <div class="products-section__header">
+      <h2 class="products-section__title">Collection</h2>
+      <div class="products-section__filters" role="group" aria-label="Filtrer par catégorie">
+        {categories.map(cat => (
+          <button
+            class={`filter-btn ${cat === 'Tous' ? 'active' : ''}`}
+            data-category={cat}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="products-grid" id="products-grid">
+      {products.map((product, i) => (
+        <ProductCard product={product} index={i} />
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+.products-section {
+  padding: 6rem 0;
+}
+
+.products-section__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.products-section__title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+.products-section__filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.45rem 1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  cursor: pointer;
+  background: transparent;
+  font-family: var(--font-body);
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .products-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .products-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem 1rem; }
+  .products-section__header { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .products-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem 0.75rem; }
+}
+</style>
+
+<script>
+const filterBtns = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+const grid = document.getElementById('products-grid');
+const cards = grid?.querySelectorAll<HTMLElement>('.product-card');
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cat = btn.dataset.category;
+
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    cards?.forEach(card => {
+      const productId = card.dataset.id;
+      // We use data-category on each card via JS injection
+      const cardCat = card.dataset.category;
+      if (cat === 'Tous' || cardCat === cat) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+});
+
+// Inject data-category on cards from products data
+import('/src/data/config').then(mod => {
+  const products = mod.products;
+  cards?.forEach(card => {
+    const id = card.dataset.id;
+    const product = products.find((p: any) => p.id === id);
+    if (product) card.dataset.category = product.category;
+  });
+}).catch(() => {
+  // Fallback: categories already visible, filtering won't work
+});
+</script>

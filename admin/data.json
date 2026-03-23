@@ -1,0 +1,151 @@
+{
+  "brand": {
+    "name": "MAISON ÉCLAT",
+    "tagline": "Vêtements d'exception, taillés pour durer.",
+    "description": "Une collection de pièces intemporelles pensées pour les esprits libres.",
+    "logo": "ÉCLAT",
+    "currency": "EUR",
+    "currencySymbol": "€",
+    "locale": "fr-FR"
+  },
+  "nav": [
+    { "label": "Collection", "href": "/#products" },
+    { "label": "À propos", "href": "/#about" },
+    { "label": "Contact", "href": "/#contact" }
+  ],
+  "hero": {
+    "headline": "La nouvelle\ncollection",
+    "subheadline": "Printemps — Été 2025",
+    "cta": "Découvrir",
+    "ctaHref": "/#products",
+    "badge": "Nouveautés"
+  },
+  "about": {
+    "title": "Notre philosophie",
+    "text": "Chaque pièce est pensée avec soin, dans des matières nobles et durables. Nous croyons en une mode consciente, intemporelle et accessible.",
+    "values": [
+      { "icon": "◈", "label": "Matières naturelles" },
+      { "icon": "◉", "label": "Production responsable" },
+      { "icon": "◎", "label": "Livraison offerte dès 80€" }
+    ]
+  },
+  "footer": {
+    "text": "© 2025 Maison Éclat. Tous droits réservés.",
+    "links": [
+      { "label": "Mentions légales", "href": "#" },
+      { "label": "CGV", "href": "#" },
+      { "label": "Contact", "href": "#" }
+    ]
+  },
+  "theme": {
+    "bg": "#FAFAF8",
+    "bgAlt": "#F2F1EE",
+    "text": "#1A1A18",
+    "textMuted": "#888880",
+    "accent": "#1A1A18",
+    "accentFg": "#FAFAF8",
+    "border": "#E5E4E0",
+    "radius": "2px"
+  },
+  "categories": ["Hauts", "Bas", "Robes", "Vestes", "Manteaux"],
+  "products": [
+    {
+      "id": "chemise-lin-blanc",
+      "name": "Chemise en lin lavé",
+      "price": 89,
+      "originalPrice": null,
+      "category": "Hauts",
+      "badge": "Bestseller",
+      "description": "Une chemise en lin lavé à la coupe décontractée. Légère, respirante, parfaite pour toutes les saisons.",
+      "details": ["100% lin lavé certifié OEKO-TEX", "Coupe ample et décontractée", "Col boutonné, manches longues ajustables", "Lavage en machine 30°C"],
+      "sizes": ["XS", "S", "M", "L", "XL"],
+      "colors": [
+        { "name": "Blanc cassé", "hex": "#F5F2EC" },
+        { "name": "Sable", "hex": "#C9B99A" },
+        { "name": "Ardoise", "hex": "#6B7280" }
+      ],
+      "images": ["https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=800&q=80"],
+      "inStock": true,
+      "featured": true,
+      "order": 0
+    },
+    {
+      "id": "pantalon-wide-leg",
+      "name": "Pantalon wide-leg",
+      "price": 119,
+      "originalPrice": 149,
+      "category": "Bas",
+      "badge": "Soldes",
+      "description": "Un pantalon à jambe large et taille haute, en crêpe fluide.",
+      "details": ["72% viscose, 28% polyester", "Taille haute élastiquée", "Jambe extra-large", "Poches latérales profondes"],
+      "sizes": ["XS", "S", "M", "L"],
+      "colors": [
+        { "name": "Noir", "hex": "#1A1A18" },
+        { "name": "Ivoire", "hex": "#F0EDE4" }
+      ],
+      "images": ["https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800&q=80"],
+      "inStock": true,
+      "featured": true,
+      "order": 1
+    },
+    {
+      "id": "robe-midi-coton",
+      "name": "Robe midi en coton",
+      "price": 105,
+      "originalPrice": null,
+      "category": "Robes",
+      "badge": "Nouveau",
+      "description": "Une robe midi légère en coton biologique. Coupe fluide, encolure ronde, dos légèrement ouvert.",
+      "details": ["100% coton biologique GOTS", "Longueur midi", "Encolure ronde, manches courtes", "Fermeture zippée dans le dos"],
+      "sizes": ["XS", "S", "M", "L", "XL"],
+      "colors": [
+        { "name": "Terracotta", "hex": "#C06B4A" },
+        { "name": "Vert sauge", "hex": "#8A9E8B" },
+        { "name": "Écru", "hex": "#EDE8DC" }
+      ],
+      "images": ["https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80"],
+      "inStock": true,
+      "featured": true,
+      "order": 2
+    },
+    {
+      "id": "veste-blazer-oversized",
+      "name": "Blazer oversized",
+      "price": 175,
+      "originalPrice": null,
+      "category": "Vestes",
+      "badge": null,
+      "description": "Un blazer structuré en coupe oversize. Pièce phare de la garde-robe.",
+      "details": ["55% laine, 45% polyester recyclé", "Coupe oversize", "Revers cranté, 2 boutons", "Doublure intérieure"],
+      "sizes": ["S", "M", "L", "XL"],
+      "colors": [
+        { "name": "Camel", "hex": "#C4955A" },
+        { "name": "Gris clair", "hex": "#D4D2CD" },
+        { "name": "Noir", "hex": "#1A1A18" }
+      ],
+      "images": ["https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&q=80"],
+      "inStock": true,
+      "featured": false,
+      "order": 3
+    },
+    {
+      "id": "manteau-laine-croise",
+      "name": "Manteau croisé en laine",
+      "price": 285,
+      "originalPrice": null,
+      "category": "Manteaux",
+      "badge": "Exclusivité",
+      "description": "Un manteau croisé en laine bouillie. Chaud, élégant, conçu pour traverser les saisons froides.",
+      "details": ["80% laine, 20% polyamide", "Coupe croisée, ceinture incluse", "Col châle, manches longues", "Poches latérales fendues"],
+      "sizes": ["S", "M", "L"],
+      "colors": [
+        { "name": "Camel", "hex": "#C4955A" },
+        { "name": "Noir", "hex": "#1A1A18" }
+      ],
+      "images": ["https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=800&q=80"],
+      "inStock": false,
+      "featured": false,
+      "order": 4
+    }
+  ]
+}

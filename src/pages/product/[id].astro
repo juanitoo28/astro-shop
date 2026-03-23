@@ -1,0 +1,641 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { products, siteConfig } from '../../data/config';
+
+export function getStaticPaths() {
+  return products.map(product => ({
+    params: { id: product.id },
+    props: { product },
+  }));
+}
+
+const { product } = Astro.props;
+const related = products.filter(p => p.id !== product.id && p.category === product.category).slice(0, 3);
+const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+const discountPct = hasDiscount
+  ? Math.round((1 - product.price / product.originalPrice!) * 100)
+  : null;
+---
+
+<Layout title={product.name} description={product.description}>
+
+  <div class="product-page">
+    <div class="container">
+      <!-- BREADCRUMB -->
+      <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <a href="/">Accueil</a>
+        <span>·</span>
+        <a href="/#products">Collection</a>
+        <span>·</span>
+        <span>{product.name}</span>
+      </nav>
+
+      <div class="product-layout">
+        <!-- IMAGES -->
+        <div class="product-gallery">
+          <div class="product-gallery__main" id="gallery-main">
+            <img
+              src={product.images[0]}
+              alt={product.name}
+              id="main-img"
+              class="product-gallery__img"
+            />
+            {!product.inStock && (
+              <div class="product-gallery__soldout">Épuisé</div>
+            )}
+            {product.badge && (
+              <span class="product-gallery__badge">{product.badge}</span>
+            )}
+          </div>
+          {product.images.length > 1 && (
+            <div class="product-gallery__thumbs">
+              {product.images.map((img, i) => (
+                <button
+                  class={`thumb-btn ${i === 0 ? 'active' : ''}`}
+                  data-src={img}
+                  aria-label={`Image ${i + 1}`}
+                >
+                  <img src={img} alt="" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <!-- PRODUCT INFO -->
+        <div class="product-info">
+          <div class="product-info__top">
+            <span class="product-info__category">{product.category}</span>
+            <h1 class="product-info__name">{product.name}</h1>
+            <div class="product-info__price">
+              <span class="product-info__price-current">
+                {product.price}{siteConfig.brand.currencySymbol}
+              </span>
+              {product.originalPrice && (
+                <span class="product-info__price-original">
+                  {product.originalPrice}{siteConfig.brand.currencySymbol}
+                </span>
+              )}
+              {discountPct && (
+                <span class="product-info__discount">−{discountPct}%</span>
+              )}
+            </div>
+          </div>
+
+          <p class="product-info__desc">{product.description}</p>
+
+          <!-- COLOR SELECTOR -->
+          <div class="product-option">
+            <div class="product-option__label">
+              Couleur : <strong id="selected-color">{product.colors[0].name}</strong>
+            </div>
+            <div class="product-option__colors">
+              {product.colors.map((color, i) => (
+                <button
+                  class={`color-swatch ${i === 0 ? 'active' : ''}`}
+                  data-color={color.name}
+                  style={`--swatch: ${color.hex}`}
+                  title={color.name}
+                  aria-label={color.name}
+                ></button>
+              ))}
+            </div>
+          </div>
+
+          <!-- SIZE SELECTOR -->
+          <div class="product-option">
+            <div class="product-option__label">
+              Taille : <strong id="selected-size">—</strong>
+            </div>
+            <div class="product-option__sizes">
+              {product.sizes.map(size => (
+                <button
+                  class="size-btn"
+                  data-size={size}
+                  disabled={!product.inStock}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+            <a href="#" class="product-option__guide">Guide des tailles</a>
+          </div>
+
+          <!-- ADD TO CART -->
+          <button
+            class="btn btn-primary product-atc"
+            id="add-to-cart"
+            disabled={!product.inStock}
+            data-product={JSON.stringify({
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              image: product.images[0],
+            })}
+          >
+            {product.inStock ? 'Ajouter au panier' : 'Épuisé'}
+          </button>
+
+          <!-- DETAILS ACCORDION -->
+          <div class="product-details">
+            <details class="product-accordion" open>
+              <summary class="product-accordion__header">
+                Composition & Entretien
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </summary>
+              <ul class="product-accordion__list">
+                {product.details.map(detail => (
+                  <li>{detail}</li>
+                ))}
+              </ul>
+            </details>
+
+            <details class="product-accordion">
+              <summary class="product-accordion__header">
+                Livraison & Retours
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </summary>
+              <div class="product-accordion__content">
+                <p>Livraison standard : 3–5 jours ouvrés. Offerte dès 80{siteConfig.brand.currencySymbol}.</p>
+                <p>Retours gratuits sous 30 jours.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- RELATED PRODUCTS -->
+      {related.length > 0 && (
+        <div class="related-products">
+          <h2 class="related-products__title">Vous aimerez aussi</h2>
+          <div class="related-grid">
+            {related.map(p => (
+              <a href={`/product/${p.id}`} class="related-card">
+                <div class="related-card__img-wrapper">
+                  <img src={p.images[0]} alt={p.name} loading="lazy" />
+                </div>
+                <div class="related-card__info">
+                  <p class="related-card__name">{p.name}</p>
+                  <p class="related-card__price">{p.price}{siteConfig.brand.currencySymbol}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+
+</Layout>
+
+<style>
+.product-page {
+  padding-top: calc(var(--nav-height) + 2rem);
+  padding-bottom: 6rem;
+}
+
+/* BREADCRUMB */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+
+.breadcrumb a { transition: color 0.2s; }
+.breadcrumb a:hover { color: var(--text); }
+.breadcrumb span { color: var(--border); }
+
+/* LAYOUT */
+.product-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: start;
+}
+
+/* GALLERY */
+.product-gallery__main {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--bg-alt);
+  margin-bottom: 0.75rem;
+}
+
+.product-gallery__img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s;
+}
+
+.product-gallery__soldout {
+  position: absolute;
+  inset: 0;
+  background: rgba(250, 250, 248, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.product-gallery__badge {
+  position: absolute;
+  top: 1rem; left: 1rem;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+}
+
+.product-gallery__thumbs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+
+.thumb-btn {
+  width: 72px; height: 90px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+  cursor: pointer;
+  background: var(--bg-alt);
+}
+
+.thumb-btn img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.thumb-btn.active { border-color: var(--accent); }
+
+/* PRODUCT INFO */
+.product-info {
+  position: sticky;
+  top: calc(var(--nav-height) + 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.product-info__category {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.product-info__name {
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  margin-top: 0.35rem;
+}
+
+.product-info__price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.product-info__price-current {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.product-info__price-original {
+  font-size: 1rem;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.product-info__discount {
+  font-size: 0.78rem;
+  background: #F0F4EC;
+  color: #4A7A4A;
+  padding: 0.2rem 0.5rem;
+  border-radius: 100px;
+}
+
+.product-info__desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+
+/* OPTIONS */
+.product-option { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.product-option__label {
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.product-option__label strong { color: var(--text); }
+
+.product-option__colors {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.color-swatch {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 2px solid transparent;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  cursor: pointer;
+  transition: outline-color 0.2s;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+}
+.color-swatch.active { outline-color: var(--accent); }
+
+.product-option__sizes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.size-btn {
+  min-width: 48px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.size-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.size-btn.active {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+
+.size-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.product-option__guide {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  align-self: flex-start;
+  transition: color 0.2s;
+}
+.product-option__guide:hover { color: var(--text); }
+
+/* ADD TO CART */
+.product-atc {
+  width: 100%;
+  justify-content: center;
+  padding: 1rem;
+  font-size: 0.85rem;
+}
+
+.product-atc:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ACCORDION */
+.product-details { border-top: 1px solid var(--border); padding-top: 1rem; }
+
+.product-accordion {
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+}
+
+.product-accordion__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  list-style: none;
+  user-select: none;
+}
+
+.product-accordion__header::-webkit-details-marker { display: none; }
+
+.product-accordion__list {
+  padding: 1rem 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.product-accordion__list li {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding-left: 1rem;
+  position: relative;
+}
+
+.product-accordion__list li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--border);
+}
+
+.product-accordion__content {
+  padding: 1rem 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.product-accordion__content p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* RELATED */
+.related-products {
+  margin-top: 6rem;
+  border-top: 1px solid var(--border);
+  padding-top: 4rem;
+}
+
+.related-products__title {
+  font-size: 1.5rem;
+  font-weight: 300;
+  margin-bottom: 2rem;
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.related-card { display: block; }
+
+.related-card__img-wrapper {
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--bg-alt);
+  margin-bottom: 0.75rem;
+}
+
+.related-card__img-wrapper img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s;
+}
+.related-card:hover .related-card__img-wrapper img {
+  transform: scale(1.04);
+}
+
+.related-card__name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.related-card__price {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .product-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .product-info { position: static; }
+  .related-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .related-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+}
+</style>
+
+<script>
+// Gallery thumbnails
+document.querySelectorAll<HTMLButtonElement>('.thumb-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const src = btn.dataset.src;
+    const mainImg = document.getElementById('main-img') as HTMLImageElement;
+    if (mainImg && src) {
+      mainImg.style.opacity = '0';
+      setTimeout(() => {
+        mainImg.src = src;
+        mainImg.style.opacity = '1';
+      }, 150);
+    }
+    document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Color selector
+document.querySelectorAll<HTMLButtonElement>('.color-swatch').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const label = document.getElementById('selected-color');
+    if (label) label.textContent = btn.dataset.color || '';
+  });
+});
+
+// Size selector
+let selectedSize = '';
+document.querySelectorAll<HTMLButtonElement>('.size-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedSize = btn.dataset.size || '';
+    const label = document.getElementById('selected-size');
+    if (label) label.textContent = selectedSize;
+  });
+});
+
+// Add to cart
+const atcBtn = document.getElementById('add-to-cart') as HTMLButtonElement;
+atcBtn?.addEventListener('click', () => {
+  if (!selectedSize) {
+    // Highlight size selector
+    const sizeSection = document.querySelector('.product-option__sizes');
+    sizeSection?.classList.add('shake');
+    setTimeout(() => sizeSection?.classList.remove('shake'), 500);
+    return;
+  }
+
+  const selectedColorEl = document.querySelector<HTMLButtonElement>('.color-swatch.active');
+  const selectedColor = selectedColorEl?.dataset.color || '';
+
+  const data = JSON.parse(atcBtn.dataset.product || '{}');
+  const event = new CustomEvent('add-to-cart', {
+    detail: {
+      item: {
+        ...data,
+        size: selectedSize,
+        color: selectedColor,
+      }
+    },
+    bubbles: true,
+  });
+  document.dispatchEvent(event);
+
+  // Feedback
+  const original = atcBtn.textContent;
+  atcBtn.textContent = '✓ Ajouté';
+  atcBtn.disabled = true;
+  setTimeout(() => {
+    atcBtn.textContent = original;
+    atcBtn.disabled = false;
+  }, 1500);
+});
+</script>
+
+<style is:global>
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+.shake { animation: shake 0.4s ease; }
+</style>
