@@ -3,7 +3,8 @@
 // ============================================================
 
 // Import statique via Vite — compatible build Netlify
-const files = import.meta.glob('/admin/data.json', {
+// Après
+const files = import.meta.glob('/public/admin/data.json', {
   eager: true,
   import: 'default',
   as: 'raw',
