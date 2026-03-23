@@ -1,24 +1,24 @@
 // ============================================================
-//  CONFIG — Lire depuis admin/data.json (source de vérité)
-//  Ce fichier est utilisé par Astro au moment du BUILD.
-//  Toutes les modifications se font via l'interface admin.
+//  CONFIG — Lire depuis admin/data.json (Astro-native)
 // ============================================================
 
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+// Import statique via Vite — compatible build Netlify
+const files = import.meta.glob('/admin/data.json', {
+  eager: true,
+  import: 'default',
+  as: 'raw',
+});
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const dataPath  = join(__dirname, '../../admin/data.json');
+const raw = Object.values(files)[0] as string;
 
 let _data: any;
 try {
-  _data = JSON.parse(readFileSync(dataPath, 'utf-8'));
+  _data = JSON.parse(raw);
 } catch {
   _data = {
     brand: { name: 'MA BOUTIQUE', tagline: '', description: '', logo: 'SHOP', currency: 'EUR', currencySymbol: '€', locale: 'fr-FR' },
-    nav:   [],
-    hero:  { headline: 'Bienvenue', subheadline: '', cta: 'Découvrir', ctaHref: '/#products', badge: '' },
+    nav: [],
+    hero: { headline: 'Bienvenue', subheadline: '', cta: 'Découvrir', ctaHref: '/#products', badge: '' },
     about: { title: '', text: '', values: [] },
     footer: { text: '', links: [] },
     theme: { bg: '#FAFAF8', bgAlt: '#F2F1EE', text: '#1A1A18', textMuted: '#888880', accent: '#1A1A18', accentFg: '#FAFAF8', border: '#E5E4E0', radius: '2px' },
